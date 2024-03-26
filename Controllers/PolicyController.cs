@@ -1,7 +1,9 @@
-﻿using iBrokerageWebApi.Model;
+﻿using iBrokerageWebApi.Data;
+using iBrokerageWebApi.Model.Domain;
+using iBrokerageWebApi.Model.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Data.SqlClient;
+using System.Runtime.Serialization.DataContracts;
 
 namespace iBrokerageWebApi.Controllers
 {
@@ -9,95 +11,55 @@ namespace iBrokerageWebApi.Controllers
     [ApiController]
     public class PolicyController : ControllerBase
     {
-        private readonly string connectionString;
-
-        public PolicyController(IConfiguration configuration)
+        private readonly DataContext dbContext;
+        public PolicyController(DataContext dbContext)
         {
-            connectionString = configuration["ConnectionStrings:SqlServerDb"] ?? "";
+            this.dbContext = dbContext;
+        }
+        [HttpGet]
+        public IActionResult GetAll()
+        {
+            var policies = dbContext.Policies.ToList();
+            return Ok(policies);
         }
 
-        [HttpPost]
-        public IActionResult CreatePolicy(Policy policy)
+        [HttpGet]
+        [Route("{policyNo}")]
+        public IActionResult GetByPolicyNo([FromRoute] string policyNo)
         {
-            try
+            var policy = dbContext.Policies.Find(policyNo);
+            if (policy == null)
             {
-                using (var connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    string sql = "INSERT INTO policies " +
-                        "(PolicyNo, CoPolicyNo, BranchID, Branch, BizSource) VALUES " +
-                        "(@PolicyNo, @CoPolicyNo, @BranchID, @Branch, @BizSource)";
-
-                    using (var command = new SqlCommand(sql, connection))
-                    {
-                        command.Parameters.AddWithValue("PolicyNo", policy.PolicyNo);
-                        command.Parameters.AddWithValue("CoPolicyNo", policy.CoPolicyNo);
-                        command.Parameters.AddWithValue("BranchID", policy.BranchID);
-                        command.Parameters.AddWithValue("Branch", policy.Branch);
-                        command.Parameters.AddWithValue("BizSource", policy.BizSource);
-
-
-                        command.ExecuteNonQuery();
-
-                    }
-                }
-
+                return NotFound();
             }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("Product", "Sorry but we have an exception");
-                return BadRequest(ModelState);
-            }
-
-            return Ok();
-        }
-
-        [HttpGet("{PolicyNo}")]
-        public IActionResult GetPolicy(string PolicyNo)
-        {
-            Policy policy = new Policy();
-            try
-            {
-                using (var connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    string sql = "SELECT * FROM Policies WHERE PolicyNo=@PolicyNo";
-
-
-                    using (var command = new SqlCommand(sql, connection))
-                    {
-                        command.Parameters.AddWithValue("PolicyNo", PolicyNo);
-                        using (var reader = command.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-
-                                policy.PolicyNo = reader.GetString(1);
-                                policy.CoPolicyNo = reader.GetString(2);
-                                policy.BranchID = reader.GetString(3);
-                                policy.Branch = reader.GetString(4);
-                                policy.BizSource = reader.GetString(5);
-
-
-
-                            }
-                            else
-                            {
-                                return NotFound();
-                            }
-                        }
-                    }
-                }
-
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("Product", "Sorry but we have an exception");
-                return BadRequest(ModelState);
-            }
-
             return Ok(policy);
         }
 
+
+        [HttpPost]
+        public IActionResult Create([FromBody] Policy policy)
+        {
+            //var policyDomainModel = new Policy
+            //{
+            //    CoPolicyNo = addPolicyRequestDto.CoPolicyNo,
+            //    BranchID = addPolicyRequestDto.BranchID,
+            //    Branch = addPolicyRequestDto.Branch,
+            //    BizSource = addPolicyRequestDto.BizSource
+            //};
+
+            dbContext.Policies.Add(policy);
+            dbContext.SaveChanges();
+
+            //var policyDto = new PolicyDto
+            //{
+            //    PolicyNo = policyDomainModel.PolicyNo,
+            //    BranchID = policyDomainModel.BranchID,
+            //    Branch = policyDomainModel.Branch,
+            //    BizSource = policyDomainModel.BizSource
+            //};
+
+            return Ok();
+
+        }
     }
 }

@@ -1,11 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace iBrokerageWebApi.Model.Domain
+﻿namespace iBrokerageWebApi.Model.DTO
 {
-    public class Policy
+    public class AddPolicyRequestDto
     {
-        [Key]
-        public string PolicyNo { get; set; }
         public string? CoPolicyNo { get; set; }
         public string? BranchID { get; set; }
         public string? Branch { get; set; }

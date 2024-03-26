@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace iBrokerageWebApi.Model.Domain
+namespace iBrokerageWebApi.Model.DTO
 {
-    public class Policy
+    public class PolicyDto
     {
         [Key]
         public string PolicyNo { get; set; }
