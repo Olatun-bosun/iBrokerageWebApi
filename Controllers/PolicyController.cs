@@ -1,8 +1,13 @@
-﻿using iBrokerageWebApi.Data;
+﻿using AutoMapper;
+using iBrokerageWebApi.Data;
 using iBrokerageWebApi.Model.Domain;
 using iBrokerageWebApi.Model.DTO;
+using iBrokerageWebApi.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using System.Data.SqlClient;
 using System.Runtime.Serialization.DataContracts;
 
 namespace iBrokerageWebApi.Controllers
@@ -11,55 +16,94 @@ namespace iBrokerageWebApi.Controllers
     [ApiController]
     public class PolicyController : ControllerBase
     {
+        //private readonly string connectionString;
+
+        //public PolicyController(IConfiguration configuration)
+        //{
+        //    connectionString = configuration["ConnectionStrings:SqlServerDb"] ?? "";
+        //}
         private readonly DataContext dbContext;
-        public PolicyController(DataContext dbContext)
+        private readonly IPolicyRepository policyRepository;
+        private readonly IMapper mapper;
+
+        public PolicyController(DataContext dbContext, IPolicyRepository policyRepository, IMapper mapper )
         {
             this.dbContext = dbContext;
+            this.policyRepository = policyRepository;
+            this.mapper = mapper;
         }
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var policies = dbContext.Policies.ToList();
-            return Ok(policies);
+            var policysDomain = await policyRepository.GetAllAsync();
+
+            var policyDto = mapper.Map<List<PolicyDto>>(policysDomain);
+
+            return Ok(policyDto);
         }
 
         [HttpGet]
         [Route("{policyNo}")]
-        public IActionResult GetByPolicyNo([FromRoute] string policyNo)
+        public async Task<IActionResult> GetByPolicyNo([FromRoute] string policyNo)
         {
-            var policy = dbContext.Policies.Find(policyNo);
-            if (policy == null)
+            //var policy = dbContext.Policies.Find(policyNo);   
+            var policyDomain = await policyRepository.GetByPolicyNoAsync(policyNo);
+            if (policyDomain == null)
             {
                 return NotFound();
             }
-            return Ok(policy);
+
+            var policyDto = mapper.Map<PolicyDto>(policyDomain);
+
+            return Ok(policyDto);
         }
 
 
         [HttpPost]
-        public IActionResult Create([FromBody] Policy policy)
+        public async Task<IActionResult> Create([FromBody] AddPolicyRequestDto addPolicyRequestDto)
         {
-            //var policyDomainModel = new Policy
+            var policyDomainModel = mapper.Map<Policy>(addPolicyRequestDto);
+            policyDomainModel= await policyRepository.CreateAsync(policyDomainModel);
+
+            var policyDto = mapper.Map<PolicyDto>(policyDomainModel);
+
+            return CreatedAtAction(nameof(GetByPolicyNo), new { policyNo = policyDomainModel.PolicyNo }, policyDomainModel);
+
+            }
+            //[HttpPost]
+            //public IActionResult CreatePolicy(AddPolicyRequestDto addPolicyRequestDto)
             //{
-            //    CoPolicyNo = addPolicyRequestDto.CoPolicyNo,
-            //    BranchID = addPolicyRequestDto.BranchID,
-            //    Branch = addPolicyRequestDto.Branch,
-            //    BizSource = addPolicyRequestDto.BizSource
-            //};
+            //    try
+            //    {
+            //        using (var connection = new SqlConnection(connectionString))
+            //        {
+            //            connection.Open();
+            //            string sql = "INSERT INTO policies " +
+            //                "( CoPolicyNo, BranchID, Branch, BizSource) VALUES " +
+            //                "( @CoPolicyNo, @BranchID, @Branch, @BizSource)";
 
-            dbContext.Policies.Add(policy);
-            dbContext.SaveChanges();
+            //            using (var command = new SqlCommand(sql, connection))
+            //            {
 
-            //var policyDto = new PolicyDto
-            //{
-            //    PolicyNo = policyDomainModel.PolicyNo,
-            //    BranchID = policyDomainModel.BranchID,
-            //    Branch = policyDomainModel.Branch,
-            //    BizSource = policyDomainModel.BizSource
-            //};
+            //                command.Parameters.AddWithValue("CoPolicyNo", addPolicyRequestDto.CoPolicyNo);
+            //                command.Parameters.AddWithValue("BranchID", addPolicyRequestDto.BranchID);
+            //                command.Parameters.AddWithValue("Branch", addPolicyRequestDto.Branch);
+            //                command.Parameters.AddWithValue("BizSource", addPolicyRequestDto.BizSource);
 
-            return Ok();
 
+            //                command.ExecuteNonQuery();
+
+            //            }
+            //        }
+
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        ModelState.AddModelError("Product", "Sorry but we have an exception");
+            //        return BadRequest(ModelState);
+            //    }
+
+            //    return Ok();
+            //}
         }
-    }
 }

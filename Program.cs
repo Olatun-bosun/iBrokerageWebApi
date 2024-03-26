@@ -1,5 +1,8 @@
 using iBrokerageWebApi.Data;
+using iBrokerageWebApi.Repositories;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using iBrokerageWebApi.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +15,10 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DataContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServerDb")));
+
+builder.Services.AddScoped<IPolicyRepository, SQLPolicyRepository>();
+
+builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 var app = builder.Build();
 
