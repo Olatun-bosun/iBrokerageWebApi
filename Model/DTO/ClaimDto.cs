@@ -1,10 +1,12 @@
-﻿namespace iBrokerageWebApi.Model
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace iBrokerageWebApi.Model.DTO
 {
-    public class Claim
+    public class ClaimDto
     {
-        public string ClaimNo { get; set; } = "";
+        [Key]
         public long ClaimReservedID { get; set; }
-        public string BranchID { get; set; } = "";
+        public string? BranchID { get; set; }
         public DateTime? EntryDate { get; set; }
         public DateTime? NotifyDate { get; set; }
         public DateTime? LossDate { get; set; }

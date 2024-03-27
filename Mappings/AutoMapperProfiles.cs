@@ -10,6 +10,8 @@ namespace iBrokerageWebApi.Mappings
         {
             CreateMap<Policy, PolicyDto>().ReverseMap();
             CreateMap<AddPolicyRequestDto, Policy>().ReverseMap();
+            CreateMap<AddClaimRequest, Claim>().ReverseMap();
+            CreateMap<Claim,  ClaimDto>().ReverseMap();
         }
 
     }

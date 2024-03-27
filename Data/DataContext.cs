@@ -11,5 +11,6 @@ namespace iBrokerageWebApi.Data
         }
 
         public DbSet<Policy> Policies { get; set; }
+        public DbSet<Claim> ClaimsReserved { get; set; }
     }
 }
